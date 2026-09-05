@@ -1,0 +1,25 @@
+/**
+ * Mimic the BaseHandler.aroundHandler dispatch shape: a TYPED catch clause
+ * first (requires the runtime to classify the exception by walking its cause
+ * chain via ExceptionUtil.exceptionIsOfType), then catch(any) as the fallback.
+ *
+ * Throw a CYCLIC-cause exception. Classifying it against the typed clause
+ * (java.io.IOException — never matches) walks the cause chain; on a cyclic
+ * chain the walk never terminates and the thread spins before ANY catch body
+ * runs — the same signature seen in production.
+ */
+try {
+    throw createObject( "java", "CyclicException" ).init( "boom: cyclic cause" );
+}
+catch ( java.io.IOException e ) {
+    echo( "caught IOException (unexpected)
+" );
+}
+catch ( any e ) {
+    echo( "caught any: " & e.getClass().getName() & "
+" );
+    echo( "DONE-ANY
+" );
+}
+echo( "SCRIPT-COMPLETE
+" );

@@ -1,0 +1,20 @@
+/**
+ * Control: same dispatch shape as repro.bxs but with a LINEAR (non-cyclic)
+ * cause chain. Classification against the typed clause walks the chain,
+ * terminates, falls through to catch(any), prints done. Expected exit 0.
+ */
+try {
+    throw createObject( "java", "LinearException" ).init( "boom: linear cause" );
+}
+catch ( java.io.IOException e ) {
+    echo( "caught IOException (unexpected)
+" );
+}
+catch ( any e ) {
+    echo( "caught any: " & e.getClass().getName() & "
+" );
+    echo( "DONE-ANY
+" );
+}
+echo( "SCRIPT-COMPLETE
+" );
