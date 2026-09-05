@@ -1,4 +1,5 @@
-# Compiled classes and generated evidence
+# Compiled classes (regenerate via run.sh)
 classes/
-evidence/
 *.class
+
+# Keep evidence/ committed — it is the reproduction proof for Ortus.
