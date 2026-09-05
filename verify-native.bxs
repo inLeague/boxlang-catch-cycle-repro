@@ -1,0 +1,26 @@
+/**
+ * Verify a native CustomException cycle built via initCause().
+ */
+a = createObject( "java", "ortus.boxlang.runtime.types.exceptions.CustomException" ).init( "cycle-a" );
+b = createObject( "java", "ortus.boxlang.runtime.types.exceptions.CustomException" ).init( "cycle-b" );
+a.initCause( b );
+b.initCause( a );
+
+echo( "a.cause is b: " & ( a.getCause() == b ) & "
+" );
+echo( "b.cause is a: " & ( b.getCause() == a ) & "
+" );
+
+// Walk 6 steps of the chain from a: should alternate B A B A B A
+cur = a;
+chain = "";
+for ( i = 1; i <= 6; i++ ) {
+    cur = cur.getCause();
+    if ( cur == a ) chain &= "A";
+    else if ( cur == b ) chain &= "B";
+    else chain &= "?";
+}
+echo( "6-step walk from a: " & chain & "
+" );
+echo( "VERIFY-COMPLETE
+" );

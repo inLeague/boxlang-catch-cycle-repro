@@ -1,0 +1,37 @@
+/**
+ * Native BoxLang exceptions with a cyclic cause chain, built with initCause().
+ *
+ * CustomException(message) -> BoxRuntimeException -> BoxLangException ->
+ * RuntimeException: cause is null after construction, so Throwable.initCause()
+ * is legal. Calling a.initCause(b); b.initCause(a) produces a true 2-node
+ * cycle entirely from BoxLang-native exceptions (verified: a.cause==b and
+ * b.cause==a both hold, and a 6-step getCause() walk alternates B A B A B A).
+ *
+ * Then throw it through a TYPED catch (java.io.IOException). The classifier
+ * must walk the cyclic cause chain and spin.
+ */
+a = createObject( "java", "ortus.boxlang.runtime.types.exceptions.CustomException" ).init( "cycle-a" );
+b = createObject( "java", "ortus.boxlang.runtime.types.exceptions.CustomException" ).init( "cycle-b" );
+a.initCause( b );
+b.initCause( a );
+
+echo( "a.cause is b: " & ( a.getCause() == b ) & "
+" );
+echo( "b.cause is a: " & ( b.getCause() == a ) & "
+" );
+
+try {
+    throw( a );
+}
+catch ( java.io.IOException e ) {
+    echo( "caught IOException (unexpected)
+" );
+}
+catch ( any e ) {
+    echo( "caught any: " & e.getClass().getName() & "
+" );
+    echo( "DONE-ANY
+" );
+}
+echo( "SCRIPT-COMPLETE
+" );
