@@ -1,0 +1,3 @@
+Using BoxLang runtime: /tmp/../home/hermes/.CommandBox/cfml/modules/commandbox-boxlang/lib/boxlang/boxlang-1.17.0/boxlang-1.17.0.jar
+Java: openjdk version "25.0.4.1" 2026-08-18 LTS
+javac: javac 25.0.4.1

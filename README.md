@@ -41,15 +41,17 @@ A cyclic chain therefore only spins when classification must walk causes — i.e
 a typed (non-any) catch whose type does not match any reachable node.
 Production's `BaseHandler.aroundHandler` has five typed catches
 (`ValidationException`, `StripeException`, `EntityNotFound|RecordNotFound`,
-`TokenInvalidException`, `NoAuthHandlerAuthFailure`) before the `catch(any)`, so
-every thrown exception is walked against each typed clause.
+`TokenInvalidException`, `NoAuthHandlerAuthFailure`) before the `catch(any)`.
+Evaluation stops at the first matching clause (or hangs at the first
+non-matching classification of a cyclic chain — it does not proceed to later
+clauses once the walk loops).
 
 ### Stack-trace serialization
 
-`ExceptionUtil.buildTagContext()` calls `getMergedStackTrace2()` internally; both
-walk the cause chain to render a stack trace. The same cyclic chain therefore
-also hangs stack-trace serialization (a single unguarded walk, not two
-independent loops).
+`ExceptionUtil.buildTagContext()` hangs inside its call to
+`getMergedStackTrace2()`; the cause-chain walk that renders a stack trace is the
+same unguarded walk as the classifier. A cyclic chain therefore also hangs
+stack-trace serialization (one walk, not two independent loops).
 
 ## Result (verified 2026-09-05, BoxLang 1.17.0, Temurin 25)
 
@@ -88,10 +90,11 @@ signature in request threads. **This repository establishes that the runtime
 defect is real** (a synthetic cyclic chain hangs the classifier). It does **not**
 establish the concrete exception cause-graph produced by Quick/qb or Hibernate
 in those incidents — the exception identities/cause links from production have
-not yet been captured. Those incidents are **consistent with** this defect; the
-2026-08-14 case showed a Hibernate `QueryException` whose `wrapWithQueryString`
-wraps the exception with itself as cause (a cyclic shape), and the 2026-09-05
-case fired from a Quick/qb ORM query path.
+not yet been captured. Those incidents are **consistent with** this defect. (The
+2026-08-14 case involved a Hibernate `QueryException` from an HQL boolean-literal
+mismatch; Hibernate's `wrapWithQueryString` returns the existing exception or a
+new wrapper whose cause is the original — neither operation creates a
+back-reference, so we do not claim it produces a cycle.)
 
 ## Reproduce
 
@@ -105,11 +108,20 @@ The runner discovers a BoxLang runtime jar under `$HOME/.CommandBox` (newest
 install it with `box install commandbox-boxlang`).
 
 Requires Linux/GNU utilities (`bash`, `find`, `pgrep`, `ps`, `timeout`, `jstack`,
-`javac`), a JDK ≥ 17, and a BoxLang runtime jar. Outputs land in `evidence/`.
+`javac`), a JDK ≥ 21, and a BoxLang runtime jar. Outputs land in `evidence/`.
 
-The runner validates its own results: the control must exit 0 and print
-`DONE-ANY`; each repro must exit 124 (timeout kill) and must NOT print
-`SCRIPT-COMPLETE`. Exit status is 0 only if all three checks pass.
+The runner validates its own results rather than trusting a bare timeout:
+- the control must exit 0, catch `LinearException`, and print `SCRIPT-COMPLETE`;
+- each repro must be killed by the timeout (exit 124) or its SIGKILL fallback
+  (exit 137) **and** a captured main-thread dump must show the classifier frame
+  `ExceptionUtil.exceptionIsOfType` (from the `jstack` capture or the SIGQUIT
+  dump in the output file). A timeout with no classifier frame is reported as a
+  failure — a hang elsewhere is not a reproduction.
+
+Exit status is 0 only if all three checks pass. A run transcript recording the
+selected JAR, tool versions, per-check exit statuses, and timestamps is written
+to `evidence/run-transcript.txt` on every run; stale diagnostics from previous
+runs are cleared first.
 
 `verify-native.bxs` (not run by default) prints the native cycle construction
 and a 6-step `getCause()` walk to confirm the `a <-> b` cycle is real; useful
