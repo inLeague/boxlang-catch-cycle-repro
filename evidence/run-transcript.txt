@@ -1,3 +1,24 @@
-Using BoxLang runtime: /tmp/../home/hermes/.CommandBox/cfml/modules/commandbox-boxlang/lib/boxlang/boxlang-1.17.0/boxlang-1.17.0.jar
+Using BoxLang runtime: /home/hermes/.CommandBox/cfml/modules/commandbox-boxlang/lib/boxlang/boxlang-1.17.0/boxlang-1.17.0.jar
 Java: openjdk version "25.0.4.1" 2026-08-18 LTS
 javac: javac 25.0.4.1
+Run started: 2026-09-06T02:45:54Z
+
+=== Compiling Java helper classes ===
+javac OK
+
+=== CONTROL: linear cause chain (expect clean exit) ===
+  control exit: 0
+  OK: control exited 0, caught LinearException, printed SCRIPT-COMPLETE
+
+=== REPRO (java cyclic chain) (repro.bxs): expect HANG in ExceptionUtil.exceptionIsOfType ===
+  hung java pid: 107984 — SIGQUIT + jstack
+  repro.bxs exit: 124 (124 = timeout, 137 = timeout+SIGKILL; both expected for a hang)
+  OK: repro.bxs hung in ExceptionUtil.exceptionIsOfType
+
+=== REPRO-NATIVE (native cyclic chain) (repro-native.bxs): expect HANG in ExceptionUtil.exceptionIsOfType ===
+  hung java pid: 108087 — SIGQUIT + jstack
+  repro-native.bxs exit: 124 (124 = timeout, 137 = timeout+SIGKILL; both expected for a hang)
+  OK: repro-native.bxs hung in ExceptionUtil.exceptionIsOfType
+
+Run finished: 2026-09-06T02:46:37Z
+=== ALL CHECKS PASSED ===
